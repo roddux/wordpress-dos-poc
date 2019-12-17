@@ -8,10 +8,9 @@ The issue boils down to the fact that, on Linux/*nix systems, PHP doesn't tally 
 Anyway. This PoC will eat through Apache2's worker threads and will also make MySQL eat up more CPU and mem, possibly knocking over low-RAM VPS instances. NGINX installs are also vulnerable when using php-fpm, as the connections nginx<->php-fpm are exhausted. Lots of fun.
 
 ## The PoC
-Simple Python3 code that repeatedly spams a target server with ~2000 multicall requests. We can check if a site is vulnerable by using the excellent [https://webhook.site webhook.site] service.
+Simple Python3 code that repeatedly spams a target server with ~2000 multicall requests. We can check if a site is vulnerable by using the excellent https://webhook.site service.
 
 Usage as follows (change the check URL to your own):
-`$ ./poc.py check https://webhook.site/#!/eb224628-79a1-4655-91aa-c33731bf87e0 http://target.url`
+`$ ./poc.py check https://webhook.site/#!/blah-blah-blah http://target.url`
 
-After running the above, if your webhook.site page shows a couple requests coming through then the target site is vulnerable. Proceed to use the attack mode:
-`$ ./CVE-2019-XXXX.py attack http://google.ru/?q=epstein%20didnt%20kill%20himself http://target.url`
+After running the above, if your webhook.site page shows a couple requests coming through then the target site is vulnerable. Proceed to use the attack mode: `$ ./poc.py attack http://google.ru/?q=epstein%20didnt%20kill%20himself http://target.url`
